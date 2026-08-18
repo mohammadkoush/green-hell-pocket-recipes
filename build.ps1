@@ -4,11 +4,15 @@
 # are taken straight from the game install, which means the build always matches the installed
 # game version.
 #
-#   powershell -ExecutionPolicy Bypass -File build.ps1            # build + deploy
-#   powershell -ExecutionPolicy Bypass -File build.ps1 -NoDeploy  # build only
+#   powershell -ExecutionPolicy Bypass -File build.ps1          # build only - the default
+#   powershell -ExecutionPolicy Bypass -File build.ps1 -Deploy   # build AND install into the game
+#
+# DEPLOY IS OPT-IN HERE, unlike the sibling mods, and that is deliberate. This mod contains the same
+# crafting feature as Pickup Doctor, so installing both puts two craft entries in the same right-click
+# menu. A build script that installs by default is one stray keystroke away from doing exactly that.
 param(
     [string]$GameDir = 'C:\Program Files (x86)\Steam\steamapps\common\Green Hell',
-    [switch]$NoDeploy
+    [switch]$Deploy
 )
 $ErrorActionPreference = 'Stop'
 
@@ -69,7 +73,11 @@ Write-Host "Compiling PocketRecipes..." -ForegroundColor Cyan
 if ($LASTEXITCODE -ne 0) { Write-Host "BUILD FAILED (csc exit $LASTEXITCODE)" -ForegroundColor Red; exit 1 }
 Write-Host "Built $outDll" -ForegroundColor Green
 
-if ($NoDeploy) { Write-Host "Skipping deploy (-NoDeploy)." -ForegroundColor Yellow; exit 0 }
+if (-not $Deploy) {
+    Write-Host "Build only. Pass -Deploy to install it into the game." -ForegroundColor Yellow
+    Write-Host "NOTE: do not run this alongside Pickup Doctor - both add the same craft entry." -ForegroundColor Yellow
+    exit 0
+}
 
 # Deploy into its own subfolder so a mod manager never confuses it with another plugin.
 $dest = Join-Path $GameDir 'BepInEx\plugins\PocketRecipes'
